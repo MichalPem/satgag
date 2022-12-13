@@ -51,10 +51,19 @@
           bg-color="secondary"
           filled
           label="Profile picture url"
+          hint="Profile picture url"
+          lazy-rules
+        />
+        <q-input
+          v-model="this.satAmount"
+          bg-color="secondary"
+          filled
+          hint="Upvote amount"
+          label="Upvote amount"
           lazy-rules
         />
         <div>
-          <q-btn class="q-mt-lg" color="dark" label="Update" type="submit"/>
+          <q-btn class="" color="dark" label="Update" type="submit"/>
         </div>
       </q-form>
         <q-form
@@ -135,6 +144,7 @@ export default {
       warning:false,
       nick:this.store.user.nick,
       imgurl:this.store.user.imgurl,
+      satAmount:this.store.user.satAmount,
       wln:null,
       wam:null
     }
@@ -175,7 +185,8 @@ export default {
         axios.patch(constants.host + "/api/usr/" + this.store.user.password, null, {
           params: {
             nick: this.nick,
-            imgurl: this.imgurl
+            imgurl: this.imgurl,
+            satAmount: this.satAmount
           }
         }).then((response) => {
           this.store.user = response.data;

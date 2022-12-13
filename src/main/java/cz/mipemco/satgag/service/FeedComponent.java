@@ -11,6 +11,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -32,10 +35,10 @@ import static java.lang.Math.min;
 public class FeedComponent
 {
 
-	public static final Integer BOT1_ID = 4;
-	public static final Integer BOT2_ID = 6;
-	public static final Integer BOT3_ID = 7;
-	public static final Integer BOT4_ID = 8;
+	public static final Long BOT1_ID = 4L;
+	public static final Long BOT2_ID = 6L;
+	public static final Long BOT3_ID = 7L;
+	public static final Long BOT4_ID = 8L;
 	private final ArticleRepository articleRepository;
 	private final ObjectMapper objectMapper;
 	private final ImageRepository imageRepository;
@@ -57,7 +60,7 @@ public class FeedComponent
 	public void autoPostMeme() throws IOException
 	{
 		List<String> items = Arrays.asList("wholesomememes","dankmemes","memes","bitcoin","cat");
-		List<Integer> bots = Arrays.asList(BOT1_ID,BOT2_ID,BOT3_ID,BOT4_ID);
+		List<Long> bots = Arrays.asList(BOT1_ID,BOT2_ID,BOT3_ID,BOT4_ID);
 		Random generator = new Random();
 		int randomIndex = generator.nextInt(items.size());
 		String url = "https://meme-api.com/gimme/"+items.get(randomIndex);
@@ -67,13 +70,17 @@ public class FeedComponent
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		(new URL(memeDto.url)).openStream().transferTo(baos);
 
+		BufferedImage bimg = ImageIO.read(new ByteArrayInputStream(baos.toByteArray()));
 		Meme meme = new Meme();
+
 		meme.img = baos.toByteArray();
 		imageRepository.saveAndFlush(meme);
 		Article article = new Article();
 		article.date = LocalDateTime.now();
 		article.title = memeDto.title;
 		article.memeId = meme.id;
+		article.width = bimg.getWidth();
+		article.height = bimg.getHeight();
 //		article.sats = memeDto.ups;
 		article.user = userRepository.findById(bots.get(generator.nextInt(bots.size())).longValue()).get();
 		articleRepository.save(article);
@@ -123,7 +130,7 @@ public class FeedComponent
 		List<Article> articles = articleRepository.findTodayArticlesFromUsers(LocalDate.now().minusDays(1));
 		int totalSatsToEarn = articles.stream().mapToInt(i -> i.sats).sum();
 
-		int totalSats = articleRepository.findTodayArticlesFromBots(LocalDate.now().minusDays(1)).stream().mapToInt(i -> i.sats).sum();
+		double totalSats = userRepository.findAllById(Arrays.asList(BOT1_ID,BOT2_ID,BOT3_ID,BOT4_ID)).stream().mapToDouble(u->u.balance).sum();
 
 		double pricePerSat = Math.floor(totalSats/(totalSatsToEarn*1.0));
 
@@ -132,7 +139,7 @@ public class FeedComponent
 		System.out.println("Total to give " + totalSatsToEarn);
 		System.out.println("Price per sat " + pricePerSat);
 		System.out.println("Articles: " + articles.size());
-		Arrays.asList(BOT1_ID,BOT2_ID,BOT3_ID,BOT4_ID).forEach(b->userRepository.nullUserBalance(b.longValue()));
+		Arrays.asList(BOT1_ID,BOT2_ID,BOT3_ID,BOT4_ID).forEach(userRepository::nullUserBalance);
 
 	}
 

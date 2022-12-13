@@ -6,6 +6,7 @@ import { inject } from 'vue'
 
 
 import constants from "src/constants";
+import {binary_to_base58} from "base58-js";
 
 export const useArticleStore = defineStore('article-store', {
   state: () => ({
@@ -26,6 +27,7 @@ export const useArticleStore = defineStore('article-store', {
       if(state.user.password) {
         axios.get(constants.host + "/api/login/" + state.user.password).then((response) => {
           state.user = response.data
+
           Cookies.set('prkey', state.user.password, {
             secure: true,
             expires: 10
@@ -167,6 +169,19 @@ export const useArticleStore = defineStore('article-store', {
 
 
       }
+    },
+    binaryToBase58(id)
+    {
+      let long = id;
+      let byteArray = [0, 0, 0, 0, 0, 0, 0, 0];
+
+      for ( var index = 0; index < byteArray.length; index ++ ) {
+        var byte = long & 0xff;
+        byteArray [ index ] = byte;
+        long = (long - byte) / 256 ;
+      }
+
+      return binary_to_base58(byteArray)
     }
   }
 });

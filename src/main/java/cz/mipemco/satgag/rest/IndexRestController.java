@@ -74,6 +74,8 @@ public class IndexRestController
 			Optional<Article> a = articleRepository.findById(id);
 			if(a.isPresent())
 			{
+				s = s.replaceAll("!!! !!!width",a.get().width+"");
+				s = s.replaceAll("!!! !!!height",a.get().height+"");
 				s = s.replaceAll("!!! !!!imgUrl","https://"+backend+"/api/img/"+a.get().memeId);
 				s = s.replaceAll("!!! !!!title","SatGag");
 				s = s.replaceAll("!!! !!!description",a.get().title);
@@ -87,6 +89,8 @@ public class IndexRestController
 			s = s.replaceAll("!!! !!!imgUrl","https://"+backend+"/android-chrome-512x512.png");
 			s = s.replaceAll("!!! !!!articleUrl","https://"+backend);
 			s = s.replaceAll("!!! !!!description","Live & Laugh & Sats");
+			s = s.replaceAll("!!! !!!width","512");
+			s = s.replaceAll("!!! !!!height","512");
 		}
 		System.out.println("index " + userAgent);
 		final HttpHeaders httpHeaders = new HttpHeaders();

@@ -17,6 +17,9 @@
       <q-btn  class="q-ml-sm" color="dark" size="sm" text-color="secondary"  @click="$emit('articleChanged',article)" >
         <q-icon name="comment" />
       </q-btn>
+      <q-btn  class="q-ml-sm" color="dark" size="sm" text-color="secondary"  @click="share()" >
+        <q-icon name="share" />
+      </q-btn>
     </div>
 <!--    <FeedComponent v-if="id" :articles="selected.replies"/>-->
     <q-separator  />
@@ -55,6 +58,8 @@ import {isMobile} from "mobile-device-detect";
 import {base58_to_binary,binary_to_base58} from "base58-js";
 import {useArticleStore} from "stores/article-store";
 import constants from "src/constants";
+import {copyToClipboard, useQuasar} from "quasar";
+
 import ImageSelector from "components/ImageSelector";
 
 export default {
@@ -99,6 +104,11 @@ export default {
     }
   },
   methods : {
+    share()
+    {
+      copyToClipboard(constants.host + '/a/'+this.store.binaryToBase58(this.article.id))
+        .then(()=>this.$q.notify('Link copied!'))
+    },
     clean()
     {
       this.text = ""
@@ -174,7 +184,7 @@ export default {
       axios.patch(constants.host+"/api/pay/"+this.store.user.password,null, { params: {
           to:this.article.user.id,
           article_id:this.article.id,
-          amount:1
+          amount:this.store.user.satAmount
         }}).then((response)=>{
           this.store.modifyBalance(this.article.id,response.data.sats)
       }).catch((e)=>{

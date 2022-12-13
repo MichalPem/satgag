@@ -27,6 +27,8 @@ public class Article
 	public User user;
 	public String title;
 	public Integer sats = 0;
+	public int width;
+	public int height;
 
 	public Article()
 	{

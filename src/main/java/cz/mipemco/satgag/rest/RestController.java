@@ -129,27 +129,38 @@ public class RestController
 	@Transactional
 	public @ResponseBody ResponseEntity<?> getImage(@PathVariable String id,
 			@RequestParam(name = "imgurl",required = false) String imgurl,
+			@RequestParam(name = "satAmount",required = false) Integer satAmount,
 			@RequestParam(name = "nick",required = false) String nick)
 	{
 		return userRepository.findUserByPassword(getDbKey(id)).map(u -> {
 
 			u.imgurl = imgurl;
 
-			if(!userRepository.existsByLnid(nick))
+			if(!u.nick.equals(nick))
 			{
-				u.nick = nick;
-				u.lnid = nick;
-			} else {
-				int c = 1;
-				while (userRepository.existsByLnid(nick+c)||c<1000) c++;
-				if(c==1000) return ResponseEntity.badRequest().body("Nick already taken");
-				u.lnid = nick+c;
-				u.nick = nick+c;
+				if (!userRepository.existsByLnid(nick))
+				{
+					u.nick = nick;
+					u.lnid = nick;
+				} else
+				{
+					int c = 1;
+					while (userRepository.existsByLnid(nick + c) || c < 1000)
+						c++;
+					if (c == 1000)
+						return ResponseEntity.badRequest().body("Nick already taken");
+					u.lnid = nick + c;
+					u.nick = nick + c;
+				}
+			}
+			if(satAmount > 0)
+			{
+				u.satAmount = satAmount;
 			}
 			u.password = getDbKey(id);
 			userRepository.saveAndFlush(u);
 
-			return ResponseEntity.ok().body(new User(u.id,id,u.imgurl,u.nick,u.balance,u.lnid));
+			return ResponseEntity.ok().body(u.toDto(id));
 		}).orElseGet(()->ResponseEntity.notFound().build());
 	}
 
@@ -166,16 +177,14 @@ public class RestController
 			if(!a.isPresent()) return ResponseEntity.badRequest().build();
 			synchronized (RestController.class)
 			{
-				userRepository.updateBalance(getDbKey(id), !Objects.equals(a.get().user.id, u.id) ? to :  FeedComponent.BOT1_ID, article_id,amount);
+				userRepository.updateBalance(getDbKey(id), !Objects.equals(a.get().user.id, u.id) ? to :  FeedComponent.BOT1_ID.intValue(), article_id,amount);
 				r = userRepository.verify();
 			}
 			if(r.intValue() == 1 )
 			{
-
-
 				a.get().sats += amount;
 				Article dto = new Article(a.get());
-				dto.user = new User(u.id,id,u.imgurl,u.nick,u.balance,u.lnid);
+				dto.user = u.toDto(id);
 				return ResponseEntity.ok(dto);
 			}
 			return ResponseEntity.badRequest().build();
@@ -199,7 +208,7 @@ public class RestController
 				e.printStackTrace();
 				return ResponseEntity.internalServerError().body(e.getMessage());
 			}
-			return ResponseEntity.ok().body(new User(u.id,id,u.imgurl,u.nick,u.balance,u.lnid));
+			return ResponseEntity.ok().body(u.toDto(id));
 		}).orElseGet(()->ResponseEntity.notFound().build());
 	}
 
@@ -208,7 +217,7 @@ public class RestController
 	{
 
 		String dbkey = getDbKey(key);
-		return userRepository.findUserByPassword(dbkey).map(u -> ResponseEntity.ok().body(new User(u.id,key,u.imgurl,u.nick,u.balance,u.lnid))).orElseGet(() -> {
+		return userRepository.findUserByPassword(dbkey).map(u -> ResponseEntity.ok().body(u.toDto(key))).orElseGet(() -> {
 			Blake3 hasher = Blake3.newInstance();
 			hasher.update(key.getBytes());
 			String hexhash = hasher.hexdigest(4);
@@ -216,7 +225,7 @@ public class RestController
 			user.password = dbkey;
 			user.lnid = Base58.encode(hexhash.getBytes());
 			userRepository.saveAndFlush(user);
-			return ResponseEntity.ok().body(new User(user.id,key,user.imgurl,user.nick,user.balance,user.lnid));
+			return ResponseEntity.ok().body(user.toDto(key));
 		});
 
 	}
@@ -253,7 +262,7 @@ public class RestController
 				articleRepository.save(article);
 
 				Article dto = new Article(article);
-				dto.user = new User(u.id,key,u.imgurl,u.nick,u.balance,u.lnid);
+				dto.user = u.toDto(key);
 				return ResponseEntity.ok(dto);
 			} catch (IOException e)
 			{
