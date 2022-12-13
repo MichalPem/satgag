@@ -139,6 +139,7 @@ public class FeedComponent
 		System.out.println("Total to give " + totalSatsToEarn);
 		System.out.println("Price per sat " + pricePerSat);
 		System.out.println("Articles: " + articles.size());
+
 		Arrays.asList(BOT1_ID,BOT2_ID,BOT3_ID,BOT4_ID).forEach(userRepository::nullUserBalance);
 
 	}

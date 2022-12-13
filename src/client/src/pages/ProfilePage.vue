@@ -181,7 +181,10 @@ export default {
       return res.headers.get('Content-Type').startsWith('image')
     },
     async onSubmitUser() {
-      if(await this.isImgUrl(this.imgurl)) {
+      if(!await this.isImgUrl(this.imgurl)) {
+        this.$q.notify("Not image");
+        this.imgurl = "";
+      }
         axios.patch(constants.host + "/api/usr/" + this.store.user.password, null, {
           params: {
             nick: this.nick,
@@ -195,9 +198,7 @@ export default {
         }).catch((e) => {
           console.log(e)
         })
-      } else {
-        this.$q.notify("Not image");
-      }
+
     },
     onSubmitW() {
       this.$q.loading.show()
