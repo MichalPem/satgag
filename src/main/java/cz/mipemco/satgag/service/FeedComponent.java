@@ -7,6 +7,7 @@ import cz.mipemco.satgag.dto.MemeDto;
 import cz.mipemco.satgag.jpa.ArticleRepository;
 import cz.mipemco.satgag.jpa.ImageRepository;
 import cz.mipemco.satgag.jpa.UserRepository;
+import org.hibernate.exception.GenericJDBCException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +75,15 @@ public class FeedComponent
 		Meme meme = new Meme();
 
 		meme.img = baos.toByteArray();
-		imageRepository.saveAndFlush(meme);
+		try
+		{
+			imageRepository.saveAndFlush(meme);
+		}catch (GenericJDBCException e)
+		{
+			System.out.println("too big image");
+			return;
+		}
+
 		Article article = new Article();
 		article.date = LocalDateTime.now();
 		article.title = memeDto.title;
@@ -82,7 +91,7 @@ public class FeedComponent
 		article.width = bimg.getWidth();
 		article.height = bimg.getHeight();
 //		article.sats = memeDto.ups;
-		article.user = userRepository.findById(bots.get(generator.nextInt(bots.size())).longValue()).get();
+		article.user = userRepository.findById(bots.get(generator.nextInt(bots.size()))).get();
 		articleRepository.save(article);
 		System.out.println(article.user.nick + " " + url);
 
