@@ -78,7 +78,7 @@ public class FeedComponent
 		try
 		{
 			imageRepository.saveAndFlush(meme);
-		}catch (GenericJDBCException e)
+		}catch (Exception e)
 		{
 			System.out.println("too big image");
 			return;
